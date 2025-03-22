@@ -3,7 +3,7 @@ Create a user eks-admin with AdministratorAccess.
 Generate Security Credentials: Access Key and Secret Access Key.
 
 Step 2: EC2 Setup
-Launch an Ubuntu instance in your favourite region (eg. region us-west-2).
+Launch an Ubuntu instance in your favourite region (eg. region us-east-2).
 SSH into the instance from your local machine.
 
 
@@ -24,7 +24,7 @@ newgrp docker
 
 
 Step 5: Install kubectl
-curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+curl -o kubectl https://amazon-eks.s3.us-east-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin
 kubectl version --short --client
@@ -66,6 +66,29 @@ docker tag three-tire-nodejs:latest 314146303901.dkr.ecr.us-east-2.amazonaws.com
 docker push 314146303901.dkr.ecr.us-east-2.amazonaws.com/three-tire-nodejs:latest
 
 
+Step 8: Run Manifests
 
 
 
+Step 9: Install AWS Load Balancer
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+eksctl utils associate-iam-oidc-provider --region=us-east-2 --cluster=three-tier-cluster --approve
+eksctl create iamserviceaccount --cluster=three-tier-cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::----------------:policy/AWSLoadBalancerControllerIAMPolicy --approve --region=us-east-2
+
+
+Step 10: Deploy AWS Load Balancer Controller
+sudo snap install helm --classic
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update eks
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=my-cluster --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
+kubectl get deployment -n kube-system aws-load-balancer-controller
+kubectl apply -f full_stack_lb.yaml
+
+
+
+
+-----------------------------------
+delete cluster
+-----------------------------------
+eksctl delete cluster --name three-tier-cluster --region us-east-2
