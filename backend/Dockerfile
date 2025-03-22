@@ -1,6 +1,4 @@
 
-
-
 FROM node:22.14.0-slim
 # Set working directory
 WORKDIR /app
