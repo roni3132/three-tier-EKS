@@ -7,5 +7,6 @@ COPY package*.json ./
 RUN npm ci --only=production
 # Copy the rest of the application files
 COPY . .
+ENV NODE_OPTIONS=--openssl-legacy-provider
 # Start the application
 CMD ["node", "index.js"]
